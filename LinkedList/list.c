@@ -15,7 +15,7 @@ list_t *list_alloc() {
 
 
 /**
- * * frees up the memory allocated for the linked list
+ * * Frees up the memory allocated for the linked list
  * @param ll_head: pointer to the head of the linked list
 */
 void list_free(list_t *ll_head) {

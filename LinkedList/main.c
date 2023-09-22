@@ -8,7 +8,6 @@ typedef struct {
 
 //Helper function to create my arrays for the linked list values
 ArrayInfo create_array() {
-    //Code to create an array of random intergers
     ArrayInfo array;
     int max_size = 10;
     int min_size = 1;

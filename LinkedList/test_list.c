@@ -1,17 +1,15 @@
-// #include <stdio.h>
-// #include <stdlib.h>
+
 #include "list.h"
-// #include <time.h>
 
 
 /**
+ * Test if the values were added correctly to the front of the linked list
  * *Returns true if the values were added correctly to the front of the linked list
  * @param ll_head: pointer to the head of the linked list
  * @param value_array: array of values to be added to the linked list
 */
 bool test_list_add_to_front(list_t *ll_head, int *value_array, int array_size) {
     int i;
-    //int array_size = sizeof(value_array) / sizeof(value_array[0]);
     for (i = 0; i < array_size; i++) {
         printf("Value added to front: %d\n", value_array[i]);
         list_add_to_front(ll_head, value_array[i]);
@@ -26,12 +24,12 @@ bool test_list_add_to_front(list_t *ll_head, int *value_array, int array_size) {
 
 
 /**
+ * * Test if the values were added correctly to the back of the linked list
  * Returns true if the values were added correctly to the front of the linked list
  * @param ll_head: pointer to the head of the linked list
  * @param value_array: array of values to be added to the linked list
 */
 bool test_list_add_to_back(list_t *ll_head, int *value_array, int array_size) {
-    //int array_size = sizeof(value_array) / sizeof(value_array[0]);
     int i= 0;
     for (i = 0; i < array_size; i++) {
         list_add_to_back(ll_head, value_array[i]);
@@ -47,12 +45,12 @@ bool test_list_add_to_back(list_t *ll_head, int *value_array, int array_size) {
 
 
 /**
+ * Test if value was added correctly at the given index
  * *Returns true if the values were added correctly to the right index of the linked list
  * @param ll_head: pointer to the head of the linked list
  * @param value_array: array of values to be added to the linked list
 */
 bool test_list_add_at_index(list_t *ll_head, int *value_array, int array_size) {
-    //int array_size = sizeof(value_array) / sizeof(value_array[0]);
     int i;
     int min = 1;
     
@@ -69,13 +67,12 @@ bool test_list_add_at_index(list_t *ll_head, int *value_array, int array_size) {
         }
     }
     return true;
-    //?might want to free up memory for the linked list
 }
 
 
 /**
- * * Test if the first node in the list is removed
- * Only removes
+ * * Test if the first node in the list is removed, 
+ * returns true if removed correctly
  * @param ll_head: pointer to the first node in the list
 */
 bool test_list_remove_from_front(list_t *ll_head) {
@@ -103,7 +100,8 @@ bool test_list_remove_from_front(list_t *ll_head) {
 
 
 /**
- * Test if the last node in the list is removed
+ * *Test if the last node in the list is removed
+ * returns true if removed correctly from the back
  * @param ll_head: pointer to the first node(head) of the list
 */
 bool test_list_remove_from_back(list_t *ll_head) {
@@ -128,7 +126,11 @@ bool test_list_remove_from_back(list_t *ll_head) {
    return false;
 }
 
-//! Need to fix this function for the test to work
+/**
+ * * Test if the node at the given index is removed
+ * Returns true if removed correctly at the given index
+ * @param ll_head: pointer to the first node(head) of the list
+*/
 bool test_list_remove_at_index(list_t *ll_head) {
     int count = 0;
     int max = ll_head->length;
@@ -157,12 +159,12 @@ bool test_list_remove_at_index(list_t *ll_head) {
 
 /**
  * * Test if the value is in the linked list
+ * Returns true if the value is in the linked list
  * @param ll_head: pointer to the first node(head) of the list
  * @param value_array: array of values to be added to the linked list
 */
 bool test_list_is_in(list_t *ll_head, int *value_array, int array_size) {
    int i;
-   //int size = sizeof(value_array) / sizeof(value_array[0]);
    for(i = 0; i < array_size; i++) {
        printf("Value to check if in list: %d\n", value_array[i]);
        if (list_is_in(ll_head, value_array[i]) == false) {
