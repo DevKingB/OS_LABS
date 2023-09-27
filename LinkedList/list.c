@@ -19,13 +19,21 @@ list_t *list_alloc() {
  * @param ll_head: pointer to the head of the linked list
 */
 void list_free(list_t *ll_head) {
-  node_t *current = ll_head->head;
-  node_t *next;
-  while (current != NULL) {
-    next = current->next;
-    free(current);
-    current = next;
+  printf("Freeing up the memory allocated for the linked list...\n");
+  if (ll_head -> length > 0) {
+    node_t *current = ll_head->head;
+    while (current != NULL) {
+      node_t *next = current->next;
+      free(current);
+      current = next;
+      ll_head->length--;
+    }
   }
+
+  ll_head->head = NULL;
+  ll_head->length = 0;
+  free(ll_head);
+  printf("Memory freed!\n");
 }
 
 /**
@@ -43,7 +51,7 @@ int list_length(list_t *ll_head) {
 void list_print(list_t *ll_head) {
   node_t *current = ll_head->head;
   printf("Here are the current values for the linked list: \n");
-  while (current != NULL && ll_head->length != 0) {
+  while (current != NULL && ll_head->length > 0) {
     printf("%d->", current->value);
     current = current->next;
   }
@@ -130,6 +138,10 @@ elem list_remove_from_front(list_t *ll_head) {
  * @param ll_head: pointer to the head of the linked list
 */
 elem list_remove_from_back(list_t *ll_head) {
+  if(ll_head->head == NULL){
+    printf("Linked list is empty\n");
+    return -1;
+  }
   node_t *current = ll_head->head;
   node_t *prev = NULL;
   while (current->next != NULL) {
@@ -172,8 +184,8 @@ elem list_remove_at_index(list_t *ll_head, int index) {
       free(prev);
     }
     ll_head->length--;
-    return value;
     free(current);
+    return value;
   }
 
   return -1;

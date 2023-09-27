@@ -152,7 +152,7 @@ bool test_list_remove_at_index(list_t *ll_head) {
         list_print(ll_head);
         return true;
     }
-    printf("The list is empty");
+    printf("The list is empty\n");
     return false;
 }
 
@@ -188,8 +188,8 @@ bool test_list_get_elem_at(list_t *ll_head) {
    int max = ll_head->length;
    int min = 1;
    if (max == 0){
-    printf("List is empty\n");
-    return true; //Technically the function works, since there is nothing to return due to empty list
+    printf("List is empty. Could not get element from an empty list...returning false\n");
+    return false; //Technically the function works, since there is nothing to return due to empty list
    } 
    else {
     for (i = 0; i < 3; i++) {

@@ -6,7 +6,7 @@ typedef struct {
     int size;
 } ArrayInfo;
 
-//Helper function to create my arrays for the linked list values
+//Helper function to create my arrays for the linked list values!!
 ArrayInfo create_array() {
     ArrayInfo array;
     int max_size = 10;
@@ -20,7 +20,7 @@ ArrayInfo create_array() {
         exit(EXIT_FAILURE);
     }
 
-    // Fill the array with random integers
+    // Fill the array with random integer
     for (i = 0; i < array.size; i++) {
         array.pArray[i] = rand() % 100; // Generate random integers between 0 and 99
     }
@@ -121,6 +121,7 @@ int main() {
 
     //freeing up memory from the linked list and arrays
     list_free(linked_list);
+    // free(linked_list);
     free(value_array1.pArray);
     free(value_array2.pArray);
 
