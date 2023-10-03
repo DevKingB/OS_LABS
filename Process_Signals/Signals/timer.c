@@ -16,15 +16,12 @@ it will print how many alarms occurred, and the number of seconds it was execute
 int alarm_signal_handled = 0; //global variable to handle signal change
 int kill_signal_handled = 0; //global variable to handle signal change
 int alarm_count = 0; //global variable to count the number of alarms
-// clock_t start_time; //global variable to store the start time
-// clock_t end_time; //global variable to store the end time
 struct timeval start_time, end_time; //global variable to store the start time
 
 void alarm_handler(int signum)
 { //alarm signal handler
   printf("Hello World!\n"); // prints the message here
   alarm_signal_handled = 1; //change value of signal_handled
-  //exit(1); //exit after printing
 }
 
 void kill_handler(int signum)
@@ -50,6 +47,5 @@ int main(int argc, char * argv[])
     alarm_signal_handled = 0; //reset the flag
     alarm_count++; //increment the alarm count
   }
-//   end_time = clock(); //end the clock
   return 0; //never reached
 }
