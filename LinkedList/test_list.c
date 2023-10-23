@@ -139,7 +139,7 @@ bool test_list_remove_at_index(list_t *ll_head) {
         int num_of_nodes_to_remove =  (rand() % (max - min + 1)) + min; // generate a random number between min and max to remove
         printf("Here are the amount of nodes to remove from the list: %d\n", num_of_nodes_to_remove);
         while (count < num_of_nodes_to_remove) {
-            int max = ll_head->length; //dynamically gets the length of the linked list
+            //int max = ll_head->length; //dynamically gets the length of the linked list
             int randomNum = (rand() % (max - min + 1)) + min; //gets a random number to serve as index within given linked listd
             list_print(ll_head);
             printf("A value is being removed at this index: %d\n", randomNum);
@@ -194,6 +194,7 @@ bool test_list_get_elem_at(list_t *ll_head) {
    else {
     for (i = 0; i < 3; i++) {
         int randomNum = (rand() % (max - min + 1)) + min; // gets a random number to serve as index
+        printf("Here is a random index: %d\n", randomNum);// prints the random index
         if (list_is_in(ll_head, list_get_elem_at(ll_head, randomNum)) != true) {
         return false;
         }
