@@ -116,6 +116,77 @@ bool handle_builtins(char **args) {
     return false; // return false to indicate that the command is not a built-in command
 }
 
+void execute_commands_with_pipes(char **args1, char **args2) {
+    int pipefd[2];
+    if (pipe(pipefd) == -1) {
+        perror("pipe");
+        returnl
+    }
+
+    pid_t pid1 = fork();
+
+    if (pid1 == 0){
+        // child process for the first command
+        close(pipefd[0]); // close the read end of the pipe
+        dup2(pipefd[1], STDOUT_FILENO); // redirect stdout to the write end of the pipe
+        close(pipefd[1]); // close the write end of the pipe
+
+        execvp(args1[0], args1); // execute the first command
+        perror("execvp (command 1)"); // print an error message if execvp fails
+        exit(EXIT_FAILURE); // exit the child process with a failure status
+    }
+
+    pid_t pid2 = fork();
+
+    if(pid2 == 0){
+        //child process for the second command
+        close(pipefd[1]); // close the write end of the pipe
+        dup2(pipefd[0], STDIN_FILENO); // redirect stdin to the read end of the pipe
+        close(pipefd[0]); // close the read end of the pipe
+
+        execvp(args2[0], args2); // execute the second command
+        perror("execvp (command 2)"); // print an error message if execvp fails
+        exit(EXIT_FAILURE); // exit the child process with a failure status
+    }
+
+    //Execution of the parent process
+    close(pipefd[0]); // close the read end of the pipe
+    close(pipefd[1]); // close the write end of the pipe
+    waitpid(pid1, NULL, 0);
+    waitpid(pid2, NULL, 0);
+}
+
+
+//Function to handle pipe commands
+bool handle_pipe(char **args){
+    char *token;
+    char *args1[MAX_COMMAND_LINE_ARGS];
+    char *args2[MAX_COMMAND_LINE_ARGS];
+    int i = 0;
+    int mode = 0; //Collecting args for the first command, 1: collecting args for the second command
+
+    //Parse the command line into args1 and args2
+    for (token = strtok(args, "|"); token != NULL; token = strtok(NULL, "|")) {
+        if (mode == 0) {
+            args1[i] = strdup(token);
+            mode = 1;
+        } else {
+            args2[i] = strdup(token);
+            mode = 0;
+        }
+        i++;
+    }
+    args1[i] = NULL;
+    args2[i] = NULL;
+
+    if (args1[0] != NULL && args2[0] != NULL) {
+        //TODO(brandon): implement pipe execution command
+        return true;
+    }
+
+    return false;
+}
+
 int main() {
     char command_line[MAX_COMMAND_LINE_LEN];
     char *args[MAX_COMMAND_LINE_ARGS];
@@ -135,7 +206,7 @@ int main() {
             continue; // continue to the next iteration of the loop
         }
 
-        // Tokenize input and execute command or handle built-ins
+        // Tokenize input and execute command, handle built-ins, or pipe commands
         char *token = strtok(command_line, " \t\r\n"); // tokenize the input
         int i = 0;
         while (token != NULL) {
@@ -148,6 +219,8 @@ int main() {
         if (strcmp(args[0], "exit") == 0) {
             // Exit the shell
             break; // break out of the loop
+        } else if (handle_pipe(args)) {
+            // Pipe command detected
         } else if (handle_builtins(args)) {
             // Command was a built-in, no need to execute it
         } else {
