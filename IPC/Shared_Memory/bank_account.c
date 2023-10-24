@@ -39,6 +39,9 @@ CHILD RULES:
 #include <unistd.h>
 #include <sys/wait.h>
 
+#define SHMKEY_BANK_ACCOUNT 1234
+#define SHMKEY_TURN 5678
+
 //Structure for shared memory
 typedef struct {
     int BankAccount;
@@ -70,13 +73,26 @@ void withdrawMoney (shared_mem *shared, int balance) {
 int main() {
     //defining variables for shared memory
     int shmid_bank, shmid_turn;
-    key_t key;
     shared_mem *shared;
 
     //TODO(DevKingB): Implement shared memory segmentation
+    //Create shared memory segment for BankAccount
+    key_t key_bank = ftok("bank_account", SHMKEY_BANK_ACCOUNT);
+    key_t key_turn = ftok("turn", SHMKEY_TURN);
+
+    if ((shmid_bank = shmget(key_bank, sizeof(int), IPC_CREAT | 0666)) < 0) {
+        perror("shmget (bank account)");
+        exit(1);
+    }
+
+    if ((shmid_turn = shmget(key_turn, sizeof(int), IPC_CREAT | 0666)) < 0) {
+        perror("shmget (turn)");
+        exit(1);
+    }
+    
 
 
-    shared = (shared_mem *) shmat(shmid, NULL, 0);
+    shared = (shared_mem *) shmat(shmid_bank, NULL, 0);
     shared->BankAccount = 0;
     shared->Turn = 0;
     
@@ -90,7 +106,6 @@ int main() {
         for (i = 0; i < 25; i++) {
             sleep(rand() % 6);
             int balance = rand() % 51;
-            int account = shared->BankAccount;
             printf("Poor Student needs $%d\n", balance);
             while (shared->Turn != 1) {
                 //Do nothing
