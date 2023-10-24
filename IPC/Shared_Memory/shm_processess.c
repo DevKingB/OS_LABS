@@ -67,3 +67,59 @@ void withdrawMoney (shared_mem *shared, int balance) {
     shared->Turn = 0;
 }
 
+int main() {
+    //defining variables for shared memory
+    int shmid_bank, shmid_turn;
+    key_t key;
+    shared_mem *shared;
+
+    //TODO(DevKingB): Implement shared memory segmentation
+
+
+    shared = (shared_mem *) shmat(shmid, NULL, 0);
+    shared->BankAccount = 0;
+    shared->Turn = 0;
+    
+    //Create child process
+    pid_t pid;
+    pid = fork();
+    
+    //If child process
+    if (pid == 0) {
+        int i;
+        for (i = 0; i < 25; i++) {
+            sleep(rand() % 6);
+            int balance = rand() % 51;
+            int account = shared->BankAccount;
+            printf("Poor Student needs $%d\n", balance);
+            while (shared->Turn != 1) {
+                //Do nothing
+            }
+            withdrawMoney(shared, balance);
+        }
+    }
+    //If parent process(aka Dear old Dad)
+    else {
+        int i;
+        for (i = 0; i < 25; i++) {
+            sleep(rand() % 6);
+            int balance = rand() % 101;
+            int account = shared->BankAccount;
+            while (shared->Turn != 0) {
+                //Do nothing
+            }
+            if (shared->BankAccount <= 100) {
+                depositMoney(shared, balance);
+            }
+            else {
+                printf("Dear old Dad: Thinks Student has enough Cash ($%d)\n", account);
+            }
+        }
+        wait(NULL);
+        shmdt(shared);
+        shmctl(shmid_bank, IPC_RMID, NULL);
+        shmctl(shmid_turn, IPC_RMID, NULL);
+    }
+    return 0;
+}
+
