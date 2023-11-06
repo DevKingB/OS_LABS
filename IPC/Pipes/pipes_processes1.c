@@ -1,3 +1,13 @@
+/*
+This file specifically deals with the concatenation of strings using pipes and processes.
+The fixed string is howard.edu; however, you may modify that string to however you weant it to be.
+The user is prompted to enter a string to concatenate with the fixed string.
+The user is then prompted to enter a second string to concatenate with the result of the first concatenation.
+The final result is printed to the screen.
+*/
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
