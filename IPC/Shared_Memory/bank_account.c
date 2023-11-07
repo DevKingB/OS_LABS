@@ -31,110 +31,101 @@ CHILD RULES:
 
 */
 
-#include  <stdio.h>
-#include  <stdlib.h>
-#include  <sys/types.h>
-#include  <sys/ipc.h>
-#include  <sys/shm.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <time.h>
 
-#define SHMKEY_BANK_ACCOUNT 1234
-#define SHMKEY_TURN 5678
+// Define a key for our shared memory segment
+#define SHMKEY ((key_t) 1497)
 
-//Structure for shared memory
+// Shared memory data structure
 typedef struct {
     int BankAccount;
     int Turn;
 } shared_mem;
 
+// Function to deposit money
 void depositMoney(shared_mem *shared, int balance) {
     if (balance % 2 == 0) {
-    shared->BankAccount += balance;
-    printf("Dear old Dad: Deposits $%d / Balance = $%d\n", balance, shared->BankAccount);
-    } 
-    else {
+        shared->BankAccount += balance;
+        printf("Dear old Dad: Deposits $%d / Balance = $%d\n", balance, shared->BankAccount);
+    } else {
         printf("Dear old Dad: Doesn't have any money to give\n");
     }
-    shared->Turn = 1;
 }
 
-void withdrawMoney (shared_mem *shared, int balance) {
+// Function to withdraw money
+void withdrawMoney(shared_mem *shared, int balance) {
     if (balance <= shared->BankAccount) {
         shared->BankAccount -= balance;
         printf("Poor Student: Withdraws $%d / Balance = $%d\n", balance, shared->BankAccount);
-    }
-    else {
+    } else {
         printf("Poor Student: Not Enough Cash ($%d)\n", shared->BankAccount);
     }
-    shared->Turn = 0;
 }
 
+
 int main() {
-    //defining variables for shared memory
-    int shmid_bank, shmid_turn;
+    // Initialize random number generator
+    srand(time(NULL));
+
+    int shmid;
     shared_mem *shared;
 
-    //TODO(DevKingB): Implement shared memory segmentation
-    //Create shared memory segment for BankAccount
-    key_t key_bank = ftok("bank_account", SHMKEY_BANK_ACCOUNT);
-    key_t key_turn = ftok("turn", SHMKEY_TURN);
-
-    if ((shmid_bank = shmget(key_bank, sizeof(int), IPC_CREAT | 0666)) < 0) {
-        perror("shmget (bank account)");
+    // Create shared memory segment
+    shmid = shmget(SHMKEY, sizeof(shared_mem), IPC_CREAT | 0666);
+    if (shmid < 0) {
+        perror("shmget");
         exit(1);
     }
 
-    if ((shmid_turn = shmget(key_turn, sizeof(int), IPC_CREAT | 0666)) < 0) {
-        perror("shmget (turn)");
-        exit(1);
-    }
-    
-
-
-    shared = (shared_mem *) shmat(shmid_bank, NULL, 0);
+    // Attach the shared memory segment
+    shared = (shared_mem *)shmat(shmid, NULL, 0);
     shared->BankAccount = 0;
     shared->Turn = 0;
-    
-    //Create child process
-    pid_t pid;
-    pid = fork();
-    
-    //If child process
+
+    // Fork to create child process
+    pid_t pid = fork();
+
+    // If child process
+    // Child process loop
     if (pid == 0) {
-        int i;
-        for (i = 0; i < 25; i++) {
+        for (int i = 0; i < 25; i++) {
             sleep(rand() % 6);
+            while (shared->Turn != 1) {
+                    // Busy waiting (No Operation)
+            }
             int balance = rand() % 51;
             printf("Poor Student needs $%d\n", balance);
-            while (shared->Turn != 1) {
-                //Do nothing
-            }
             withdrawMoney(shared, balance);
+            shared->Turn = 0; // Explicitly give the turn to the parent
         }
-    }
-    //If parent process(aka Dear old Dad)
+    } 
+    // Parent process loop
     else {
-        int i;
-        for (i = 0; i < 25; i++) {
+        for (int i = 0; i < 25; i++) {
             sleep(rand() % 6);
-            int balance = rand() % 101;
-            int account = shared->BankAccount;
             while (shared->Turn != 0) {
-                //Do nothing
+                    // Busy waiting (No Operation)
             }
-            if (shared->BankAccount <= 100) {
-                depositMoney(shared, balance);
+            int balance = rand() % 101;
+            int account = shared->BankAccount; // Copy the value to local variable
+            if (account <= 100) {
+                    depositMoney(shared, balance);
+            } else {
+                    printf("Dear old Dad: Thinks Student has enough Cash ($%d)\n", account);
             }
-            else {
-                printf("Dear old Dad: Thinks Student has enough Cash ($%d)\n", account);
-            }
+            shared->Turn = 1; // Explicitly give the turn to the child
         }
         wait(NULL);
+        // Detach and remove the shared memory segment
         shmdt(shared);
-        shmctl(shmid_bank, IPC_RMID, NULL);
-        shmctl(shmid_turn, IPC_RMID, NULL);
+        shmctl(shmid, IPC_RMID, NULL);
     }
     return 0;
 }
-
