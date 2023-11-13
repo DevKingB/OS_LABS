@@ -120,7 +120,7 @@ void execute_commands_with_pipes(char **args1, char **args2) {
     int pipefd[2];
     if (pipe(pipefd) == -1) {
         perror("pipe");
-        returnl
+        return;
     }
 
     pid_t pid1 = fork();
