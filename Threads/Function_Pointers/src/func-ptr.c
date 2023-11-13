@@ -15,7 +15,7 @@
  * custom logic
  */
 typedef int (*Comparer) (const void *a, const void *b);
-int sortBy = 0; // 0 for arrival time, 1 for priority
+int sortBy = 0; //* Global variable to determine sorting criterion (0 for arrival time, 1 for priority)
  
 /**
  * compares 2 processes
@@ -44,5 +44,23 @@ int compareProcess(const void *this, const void *that) {
 
 
 int main (int argc, char *argv[]) {
+    // Ceheck for the correct number of arguments
+    if ( argc < 3) {
+        fprintf(stderr, "Usage: ./func-ptr <input-file-path> <sort-by>\n");
+        fflush(stdout);
+        return 1;
+    }
+
+    //Determinig sorting criterion
+    if (strcmp(argv[2], "priority") == 0) {
+        sortBy = 1;
+    }
+    else if (strcmp(argv[2], "arrival") != 0) {
+        fprintf(stderr, "Error: Invalid sorting criterion. Use 'arrivale' or 'priority'.\n");
+        fflush(stdout);
+        return 1;
+    }
+
+
     return 0;
 }
