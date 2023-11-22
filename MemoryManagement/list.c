@@ -70,6 +70,16 @@ void list_coalese_nodes(list_t *list){
     }
 }
 
+node_t* find_node_at_index(node_t* head, int index) {
+    node_t *current = head;
+    int count = 0;
+    while (current != NULL && count < index) {
+        current = current->next;
+        count++;
+    }
+    return current;
+}
+
 /********* Function Defintiions: Adding **************/
 
 void list_add_to_back(list_t *list, block_t *blk) {

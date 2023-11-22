@@ -7,10 +7,10 @@
 #include <stdbool.h>
 
 typedef struct block {
-    int pid;   // pid
+  int pid;   // pid
 	int start;
   int end;
-}block_t;
+} block_t;
 
 /* Defines the node structure. Each node contains its element, and points to the
  * next node in the list. The last element in the list should have NULL as its
@@ -18,12 +18,13 @@ typedef struct block {
 typedef struct node {
   block_t *blk;
 	struct node *next;
-}node_t;
+} node_t;
 
 /* Defines the list structure, which simply points to the first node in the
  * list. */
 struct list {
 	node_t *head;
+  int length;
 };
 typedef struct list list_t;
 
@@ -83,3 +84,6 @@ bool compareBlks(block_t* a, block_t *b);
 
 /* join adjacent nodes who blocks are physically next to each other */
 void list_coalese_nodes(list_t *l);
+
+/* Helper Function to reduce code duplication */
+node_t* find_node_at_index (node_t *head, int index);
