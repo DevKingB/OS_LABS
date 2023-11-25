@@ -106,16 +106,15 @@ node_t* find_node_at_index(node_t* head, int index) {
 
 void list_add_to_back(list_t *list, block_t *blk) {
     node_t *new_node = node_alloc(blk);
-    node_t *curr = list->head;
-    if (curr == NULL) {
+    if (list->head == NULL) { /* this is for the list being empty */
         list->head = new_node;
+        list->tail = new_node; // Updating tail pointer to the end of list
     }
-    else {
-        while (curr->next != NULL) {
-            curr = curr->next;
-        }
-        curr->next = new_node;
-    }    
+    else { /* this is for the list having at least one element */
+        list->tail->next = new_node;
+        list->tail = new_node; // Updating tail pointer to the end of list
+    }
+    list->length++; // Incrementing length of list
 }
 
 void list_add_to_front(list_t *list, block_t *blk) {
@@ -123,31 +122,29 @@ void list_add_to_front(list_t *list, block_t *blk) {
     node_t *curr = list->head;
     if (curr == NULL) {
         list->head = new_node;
+        list->tail = new_node; // Updating tail pointer to the end of list
     }
     else {
         new_node->next = curr;
         list->head = new_node;
     }
+    list->length++; // Incrementing length of list
 }
 
 void list_add_at_index(list_t *list, block_t *blk, int index) {
-    node_t *new_node = node_alloc(blk);
-    node_t *curr = list->head;
-    int count = 0;
-    if (index == 0) {
-        list_add_to_front(list, blk);
-    }
-    else if (index >= list_length(list)) { //! might change if I incoroporate the length function into the list structure
+   if (index == 0) { // Assuming linked list is 0 indexed, if index is 0, add to front
+       list_add_to_front(list, blk);
+   }
+   else if (index >= list->length) { // Assuming linked list is 0 indexed, if index is greater than or equal to length, add to back
         list_add_to_back(list, blk);
-    }
-    else {
-        while (count < index - 1) {
-            curr = curr->next;
-            count++;
-        }
-        new_node->next = curr->next;
-        curr->next = new_node;
-    }
+   }
+   else { // Index value is somewhere in the middle of the linked list
+        node_t *new_node = node_alloc(blk);
+        node_t *prev = find_node_at_index(list->head, index - 1); //Finding node before actual index value 
+        new_node->next = prev->next;
+        prev->next = new_node;
+        list->length++; // Incrementing length of list
+   }
 }
 
 void list_add_ascending_by_address(list_t *list, block_t *newblk) {
@@ -181,7 +178,7 @@ void list_add_ascending_by_blocksize (list_t *list, block_t *newblk) {
         list->head = new_node;
     }
     else {
-        while (curr != NULL && ((curr->blk->end - newblk->start) < (newblk->end - newblk->start))) {
+        while (curr != NULL && ((curr->blk->end - curr->blk->start) < (newblk->end - newblk->start))) {
             prev = curr;
             curr = curr->next;
         }
