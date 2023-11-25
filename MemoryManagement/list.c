@@ -12,23 +12,50 @@
 
 list_t *list_alloc() {
   list_t *list = malloc(sizeof(list_t));
+  if (list == NULL) {
+    printf("Error: list_alloc failed\n");
+    exit(EXIT_FAILURE);
+  }
+
   list->head = NULL;
+  list->tail = NULL;
+  list->length = 0;
+
   return list;
 }
 
 node_t *node_alloc(block_t *blk) {
   node_t *node = malloc(sizeof(node_t));
+  if (node == NULL) {
+    printf("Error: node_alloc failed\n");
+    exit(EXIT_FAILURE);
+  }
+
   node->next = NULL;
   node->blk = blk;
   return node;
 }
 
-void list_free(list_t *l) {
-  free(l);
+void list_free(list_t *list) {
+  node_t *curr = list->head;
+  node_t *next_node;
+
+  // Free each node in the list first; then free the space allocated for the list
+  while (curr != NULL) {
+    next_node = curr->next;
+    node_free(curr); //Use node_free to handle node and block freeing
+    curr = next_node;
+  }
+
+  free(list); //free the list itself
 }
 
 void node_free(node_t *node) {
-  free(node);
+  if (node != NULL) {
+    if (node->blk != NULL)
+      free(node->blk); // Free the associated block inside the node
+    free(node); // Free the node itself
+  }
 }
 
 void list_print(list_t *list) {
@@ -46,13 +73,7 @@ void list_print(list_t *list) {
 
 //? Should I just add the list_length function inside of the list structure
 int list_length(list_t *list) {
-    node_t *curr = list->head;
-    int count = 0;
-    while (curr != NULL) {
-        count++;
-        curr = curr->next;
-    }
-    return count;
+    return list->length; // This is an O(1) operation
 }
 
 void list_coalese_nodes(list_t *list){
@@ -61,8 +82,9 @@ void list_coalese_nodes(list_t *list){
     while (curr != NULL && curr->next != NULL) {
         if (curr->blk->end + 1 == curr->next->blk->start) {
             curr->blk->end = curr->next->blk->end;
-            curr->next = curr->next->next;
-            node_free(curr->next);
+            node_t *temp = curr->next;
+            curr->next = temp->next;
+            node_free(temp);
         }
         else {
             curr = curr->next;

@@ -7,9 +7,9 @@
 #include <stdbool.h>
 
 typedef struct block {
-  int pid;   // pid
-	int start;
-  int end;
+  int pid;   // Process ID
+	int start; // Start of the memory block
+  int end; // End of the memory block
 } block_t;
 
 /* Defines the node structure. Each node contains its element, and points to the
@@ -24,7 +24,8 @@ typedef struct node {
  * list. */
 struct list {
 	node_t *head;
-  int length;
+  node_t *tail; // Tail pointer for efficient operations
+  int length; // Length of the list for quick access
 };
 typedef struct list list_t;
 
