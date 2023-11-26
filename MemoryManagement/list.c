@@ -35,6 +35,13 @@ node_t *node_alloc(block_t *blk) {
   node->blk = blk;
   return node;
 }
+void node_free(node_t *node) {
+  if (node != NULL) {
+    if (node->blk != NULL)
+      free(node->blk); // Free the associated block inside the node
+    free(node); // Free the node itself
+  }
+}
 
 void list_free(list_t *list) {
   node_t *curr = list->head;
@@ -50,13 +57,6 @@ void list_free(list_t *list) {
   free(list); //free the list itself
 }
 
-void node_free(node_t *node) {
-  if (node != NULL) {
-    if (node->blk != NULL)
-      free(node->blk); // Free the associated block inside the node
-    free(node); // Free the node itself
-  }
-}
 
 void list_print(list_t *list) {
     node_t *curr = list->head;
@@ -66,7 +66,7 @@ void list_print(list_t *list) {
     }
     while (curr != NULL) {
         my_block = curr->blk;
-        printf("Block Info: PID=%d, START=%d, end=%d", my_block->pid, my_block->start, my_block->end);
+        printf("Block Info: PID=%d, START=%d, end=%d\n", my_block->pid, my_block->start, my_block->end);
         curr = curr->next;  
     }
 }
@@ -87,6 +87,7 @@ void list_coalese_nodes(list_t *list){
             node_free(temp);
         }
         else {
+            // Move to the next block if not adjacent
             curr = curr->next;
         }
     }
@@ -145,6 +146,8 @@ void list_add_at_index(list_t *list, block_t *blk, int index) {
         prev->next = new_node;
         list->length++; // Incrementing length of list
    }
+
+   //? what should be return if the index is below 0? 
 }
 
 void list_add_ascending_by_address(list_t *list, block_t *newblk) {
@@ -239,66 +242,60 @@ void list_add_descending_by_blocksize (list_t *list, block_t *newblk) {
 /********* Function Defintiions: Removing **************/
 
 block_t* list_remove_from_front(list_t *list) {
-    node_t *curr = list->head;
-    block_t *blk;
-    if (curr == NULL) { //if the list is empty
-        printf("List is empty\n");
+    if (list->head == NULL) {
+        return NULL; // List is empty
     }
-    else { // if there is at least one element in the list
-        blk = curr->blk;
-        list->head = curr->next;
-        node_free(curr);
+    node_t *temp = list->head;
+    block_t *removed_block = temp->blk;
+    list->head = list->head->next;
+    if (list->head == NULL) {
+        list->tail = NULL; // List became empty
     }
-    return blk; //? Does this return the block that was removed or the memory address of the block that was removed
+    free(temp); //Frees the node; not the block itself
+    list->length--; // Update length
+    return removed_block;
 }
 
 block_t* list_remove_from_back(list_t *list) {
-    node_t *curr = list->head;
-    node_t *prev = NULL;
-    block_t *blk;
-    if (curr == NULL) { //if the list is empty
-        printf("List is empty\n");
+    if (list->head == NULL) {
+        return NULL; // List is empty
     }
-    else { // if there is at least one element in the list
-        while (curr->next != NULL) {
-            prev = curr;
-            curr = curr->next;
-        }
-        blk = curr->blk;
-        prev->next = NULL;
-        node_free(curr);
+    block_t *removed_block = list->tail->blk; // gets the block structure from the last node
+    if (list->head == list->tail) { // Only one node in the list
+        return list_remove_from_front(list);
     }
-    return blk; //? Does this return the block that was removed or the memory address of the block that was removed
+    else { //Assuming multiple nodes in the list
+        node_t *node_before_tail = find_node_at_index(list->head, list->length - 2); // Finding the node before the tail
+        free(list->tail);
+        list->tail = node_before_tail;
+        list->tail->next = NULL; // setting the next pointer to NULL
+    }
+    list->length--; // Update length
+    return removed_block; // returning pointer to the block structure in the removed node
 }
 
 block_t* list_remove_at_index(list_t *list, int index) {
-    node_t *curr = list->head;
-    node_t *prev = NULL;
-    block_t *blk;
-    int count = 0; //! Assuming the linked list starts at 0
-    if (curr == NULL) { //if the list is empty
-        printf("List is empty\n");
-        return blk; //? Does return the block that was removed or the memory address of the block that was removed
-    }
-    else if (index == 0) { //if the index is 0
-        return list_remove_from_front(list);
-    }
-    //? what should happen if the index is out of range? for noq, I will just return the last element
-    else if (index >= list_length(list)) { // if the index is greater than the length of the list
-        return list_remove_from_back(list);
-    }
-    else { //if the index is in the middle of the list
-        while (count < index) { //? should be able to assume that each element points to another element
-            prev = curr;
-            curr = curr->next;
-            count++;
-        }
+    /* Handling out of index error */
+   if (index < 0 || index >= list->length || list->head == NULL) {
+    printf ("The list is empty or Invalid Index\n");
+    return NULL; //? what should be returned here
+   }
 
-        blk = curr->blk;
+   if (index == 0) { // Assuming linked list is 0 indexed, if index is 0, remove from front
+       return list_remove_from_front(list);
+   }
+   else if (index == list->length - 1) { // Assuming linked list is 0 indexed, if index is greater than or equal to length, remove from back
+        return list_remove_from_back(list);
+   }
+   else { // Index value is somewhere in the middle of the linked list
+        node_t *prev = find_node_at_index(list->head, index - 1); //Finding node before actual index value 
+        node_t *curr = prev->next;
+        block_t *removed_block = curr->blk;
         prev->next = curr->next;
-        node_free(curr);
-    }
-    return blk; //? does this return the block that was removed or the memory address of the block that was removed
+        free(curr); //Frees the node; not the block itself
+        list->length--; // Update length
+        return removed_block; // returning pointer to the block structure in the removed node
+   }
 }
 
 /*************** Function Definitions: Comparing ***********************/
@@ -366,56 +363,45 @@ block_t* list_get_from_front(list_t *list) {
     block_t *blk;
     if (curr == NULL) { //if the list is empty
         printf("List is empty\n");
+        return NULL;
     }
     else { // if there is at least one element in the list
         blk = curr->blk;
     }
-    return blk; //? Does this return the block that was removed or the memory address of the block that was removed
+    return blk; // returns pointer to block structure in first node
 }
 
 block_t* list_get_from_back(list_t *list) {
     node_t *curr = list->head;
-    node_t *prev = NULL;
     block_t *blk;
     if (curr == NULL) { //if the list is empty
         printf("List is empty\n");
+        return NULL;
     }
-    else { // if there is at least one element in the list
-        while (curr->next != NULL) {
-            prev = curr;
-            curr = curr->next;
-        }
-        blk = curr->blk;
-    }
-    return blk; //? Does this return the block that was removed or the memory address of the block that was removed
+    blk = list->tail->blk;
+    return blk; // returns pointer to block structure in last node
 }
 
 block_t* list_get_elem_at_index (list_t *list, int index) {
-    node_t *curr = list->head;
-    node_t *prev = NULL;
     block_t *blk;
     int count = 0; //! Assuming the linked list starts at 0
-    if (curr == NULL) { //if the list is empty
-        printf("List is empty\n");
-        return blk; //? Does return the block that was removed or the memory address of the block that was removed
+    /* If the linked list is empty*/
+    if (list->head == NULL || index <  0 || index >= list->length) {
+        printf("List is empty or invalid index\n");
+        return NULL; 
     }
-    else if (index == 0) { //if the index is 0
+
+    /* If the index is the first element in the list element */
+    if (index == 0) {
         return list_get_from_front(list);
     }
-    //? what should happen if the index is out of range? for noq, I will just return the last element
-    else if (index >= list_length(list)) { // if the index is greater than the length of the list
+    else if (index == list->length - 1) {
         return list_get_from_back(list);
     }
-    else { //if the index is in the middle of the list
-        while (count < index) { //? should be able to assume that each element points to another element
-            prev = curr;
-            curr = curr->next;
-            count++;
-        }
-
-        blk = curr->blk;
+    else {
+        node_t *elem_node = find_node_at_index(list->head, index);
+        return elem_node ? elem_node->blk : NULL; // Safely returns the block or NULL if the node doesnt exist
     }
-    return blk; //? does this return the block that was removed or the memory address of the block that was removed
 }
 
 int list_get_index_of(list_t *list, block_t *blk) {
