@@ -10,6 +10,15 @@
 
 /***** Function Definitions ********/
 
+/**
+ * Function: list_alloc
+ * --------------------
+ * Allocates memory for a new list using malloc.
+ *
+ * Returns:
+ *  A pointer to the newly allocated list. The list's head and tail are initialized to NULL, and its length is initialized to 0.
+ *  If memory allocation fails, the function prints an error message and exits with a failure status.
+ */
 list_t *list_alloc() {
   list_t *list = malloc(sizeof(list_t));
   if (list == NULL) {
@@ -24,6 +33,18 @@ list_t *list_alloc() {
   return list;
 }
 
+/**
+ * Function: node_alloc
+ * --------------------
+ * Allocates memory for a new node using malloc.
+ *
+ * Parameters:
+ *  blk: A pointer to a block that the node will contain.
+ *
+ * Returns:
+ *  A pointer to the newly allocated node. The node's next pointer is initialized to NULL, and its blk pointer is set to the passed block.
+ *  If memory allocation fails, the function prints an error message and exits with a failure status.
+ */
 node_t *node_alloc(block_t *blk) {
   node_t *node = malloc(sizeof(node_t));
   if (node == NULL) {
@@ -35,6 +56,18 @@ node_t *node_alloc(block_t *blk) {
   node->blk = blk;
   return node;
 }
+
+/**
+ * Function: node_free
+ * -------------------
+ * Frees the memory allocated for a node and its associated block.
+ *
+ * Parameters:
+ *  node: A pointer to the node to be freed.
+ *
+ * Note:
+ *  If the node or its associated block is NULL, the function does nothing.
+ */
 void node_free(node_t *node) {
   if (node != NULL) {
     if (node->blk != NULL)
@@ -43,6 +76,19 @@ void node_free(node_t *node) {
   }
 }
 
+/**
+ * Function: list_free
+ * -------------------
+ * Frees the memory allocated for a list and its nodes.
+ *
+ * Parameters:
+ *  list: A pointer to the list to be freed.
+ *
+ * Note:
+ *  The function traverses the list, freeing each node using the node_free function. 
+ *  After all nodes have been freed, it frees the memory allocated for the list itself.
+ *  If the list or any of its nodes are NULL, the function does nothing.
+ */
 void list_free(list_t *list) {
   node_t *curr = list->head;
   node_t *next_node;
@@ -57,7 +103,18 @@ void list_free(list_t *list) {
   free(list); //free the list itself
 }
 
-
+/**
+ * Function: list_print
+ * -------------------
+ * Prints the information of each block in the list.
+ *
+ * Parameters:
+ *  list: A pointer to the list to be printed.
+ *
+ * Note:
+ *  The function traverses the list, printing the PID, start, and end of each block.
+ *  If the list is empty, it prints "List is empty".
+ */
 void list_print(list_t *list) {
     node_t *curr = list->head;
     block_t *my_block;
@@ -71,11 +128,26 @@ void list_print(list_t *list) {
     }
 }
 
-//? Should I just add the list_length function inside of the list structure
+
 int list_length(list_t *list) {
     return list->length; // This is an O(1) operation
 }
 
+/**
+ * Function: list_coalese_nodes
+ * -----------------------------
+ * Coalesces adjacent nodes in the list.
+ *
+ * Parameters:
+ *  list: A pointer to the list.
+ *
+ * Description:
+ *  The function traverses the list. If it finds two adjacent nodes where the end of the first node's block 
+ *  is one less than the start of the second node's block, it merges the two nodes into one. 
+ *  The end of the first node's block is updated to be the end of the second node's block, 
+ *  and the second node is removed from the list.
+ *  If the nodes are not adjacent, it moves to the next node.
+ */
 void list_coalese_nodes(list_t *list){
     node_t *curr = list->head;
 
@@ -150,6 +222,20 @@ void list_add_at_index(list_t *list, block_t *blk, int index) {
    //? what should be return if the index is below 0? 
 }
 
+/**
+ * Function: list_add_ascending_by_address
+ * ---------------------------------------
+ * Adds a new block to the list in ascending order by address.
+ *
+ * Parameters:
+ *  list: A pointer to the list.
+ *  newblk: A pointer to the block to be added.
+ *
+ * Description:
+ *  The function creates a new node for the block and then inserts it into the list in the correct position to maintain ascending order by address.
+ *  If the list is empty, the new node becomes the head of the list.
+ *  If the list is not empty, the function traverses the list until it finds the correct position for the new node, then inserts it.
+ */
 void list_add_ascending_by_address(list_t *list, block_t *newblk) {
     node_t *new_node = node_alloc(newblk);
     node_t *curr = list->head;
@@ -173,6 +259,21 @@ void list_add_ascending_by_address(list_t *list, block_t *newblk) {
     }
 }
 
+/**
+ * Function: list_add_ascending_by_blocksize
+ * -----------------------------------------
+ * Adds a new block to the list in ascending order by block size.
+ *
+ * Parameters:
+ *  list: A pointer to the list.
+ *  newblk: A pointer to the block to be added.
+ *
+ * Description:
+ *  The function creates a new node for the block and then inserts it into the list in the correct position to maintain ascending order by block size.
+ *  Block size is calculated as the difference between the end and start of the block.
+ *  If the list is empty, the new node becomes the head of the list.
+ *  If the list is not empty, the function traverses the list until it finds the correct position for the new node, then inserts it.
+ */
 void list_add_ascending_by_blocksize (list_t *list, block_t *newblk) {
     node_t *new_node = node_alloc(newblk);
     node_t *curr = list->head;
@@ -196,6 +297,21 @@ void list_add_ascending_by_blocksize (list_t *list, block_t *newblk) {
     }
 }
 
+/**
+ * Function: list_add_descending_by_blocksize
+ * ------------------------------------------
+ * Adds a new block to the list in descending order by block size.
+ *
+ * Parameters:
+ *  list: A pointer to the list.
+ *  newblk: A pointer to the block to be added.
+ *
+ * Description:
+ *  The function creates a new node for the block and then inserts it into the list in the correct position to maintain descending order by block size.
+ *  Block size is calculated as the difference between the end and start of the block.
+ *  If the list is empty, the new node becomes the head of the list.
+ *  If the list is not empty, the function traverses the list until it finds the correct position for the new node, then inserts it.
+ */
 void list_add_descending_by_blocksize (list_t *list, block_t *newblk) {
     node_t *new_node = node_alloc(newblk);
     node_t *curr = list->head;
