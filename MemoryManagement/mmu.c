@@ -5,6 +5,17 @@
 #include "./Headers/list.h"
 #include "./Headers/util.h"
 
+/**
+ * Function: TOUPPER
+ * -----------------
+ * Converts a string to uppercase.
+ *
+ * Parameters:
+ *  arr: Pointer to the string to be converted.
+ *
+ * Description:
+ *  Iterates over each character in the string, converting each to uppercase.
+ */
 void TOUPPER(char * arr){
   
     for(int i=0;i<strlen(arr);i++){
@@ -12,6 +23,22 @@ void TOUPPER(char * arr){
     }
 }
 
+/**
+ * Function: get_input
+ * -------------------
+ * Parses the input file and determines the memory allocation policy.
+ *
+ * Parameters:
+ *  args: Command line arguments.
+ *  input: Array to store the parsed data from the file.
+ *  n: Pointer to store the number of data entries parsed.
+ *  size: Pointer to store the size of the initial memory partition.
+ *  policy: Pointer to store the chosen memory management policy.
+ *
+ * Description:
+ *  Opens the specified input file, parses the data, and sets the memory management policy
+ *  based on command line arguments. Supports 'FIFO', 'Best Fit', and 'Worst Fit' policies.
+ */
 void get_input(char *args[], int input[][2], int *n, int *size, int *policy) 
 {
   	FILE *input_file = fopen(args[1], "r");
@@ -40,6 +67,22 @@ void get_input(char *args[], int input[][2], int *n, int *size, int *policy)
         
 }
 
+/**
+ * Function: allocate_memory
+ * -------------------------
+ * Allocates memory blocks based on the specified policy.
+ *
+ * Parameters:
+ *  freelist: Pointer to the list of free memory blocks.
+ *  alloclist: Pointer to the list of allocated memory blocks.
+ *  pid: Process ID requesting memory allocation.
+ *  blocksize: Size of the memory block to allocate.
+ *  policy: Memory management policy to use for allocation.
+ *
+ * Description:
+ *  Allocates a block of memory for the specified process ID according to the chosen policy.
+ *  Supports 'First Fit', 'Best Fit', and 'Worst Fit' allocation strategies.
+ */
 void allocate_memory(list_t *freelist, list_t *alloclist, int pid, int blocksize, int policy) {
     node_t *current = freelist->head;
     node_t *best_fit = NULL;
@@ -92,6 +135,23 @@ void allocate_memory(list_t *freelist, list_t *alloclist, int pid, int blocksize
     }
 }
 
+/**
+ * Function: deallocate_memory
+ * ---------------------------
+ * Deallocates memory blocks based on the specified policy.
+ *
+ * Parameters:
+ *  alloclist: Pointer to the list of allocated memory blocks.
+ *  freelist: Pointer to the list of free memory blocks.
+ *  pid: Process ID requesting memory deallocation.
+ *  policy: Memory management policy to use for deallocation.
+ *
+ * Description:
+ *  Deallocates a block of memory for the specified process ID according to the chosen policy.
+ *  Supports 'First Fit', 'Best Fit', and 'Worst Fit' deallocation strategies.
+ *  Finds and deallocates a memory block assigned to a specific process ID.
+ *  The deallocated block is then added back to the free list according to the specified memory management policy.
+ */
 void deallocate_memory(list_t *alloclist, list_t *freelist, int pid, int policy) {
     block_t *block_to_deallocate = NULL;
     node_t *current = alloclist->head;
@@ -126,4 +186,135 @@ void deallocate_memory(list_t *alloclist, list_t *freelist, int pid, int policy)
     } else {
         printf("Error: Can't locate Memory Used by PID: %d\n", pid);
     }
+}
+
+/**
+ * Function: coalese_memory
+ * ------------------------
+ * Combines adjacent free memory blocks into larger blocks.
+ *
+ * Parameters:
+ *  list: Pointer to the list of free memory blocks.
+ *
+ * Returns:
+ *  A new list with coalesced memory blocks.
+ *
+ * Description:
+ *  Iterates through the given list of memory blocks and merges adjacent free blocks to form larger continuous memory spaces.
+ *  This helps optimize the memory utilization and allocation process.
+ */
+list_t* coalese_memory(list_t * list){
+  list_t *temp_list = list_alloc();
+  block_t *blk;
+  
+  while((blk = list_remove_from_front(list)) != NULL) {  // sort the list in ascending order by address
+        list_add_ascending_by_address(temp_list, blk);
+  }
+  
+  // try to combine physically adjacent blocks
+  
+  list_coalese_nodes(temp_list);
+        
+  return temp_list;
+}
+
+/**
+ * Function: print_list
+ * --------------------
+ * Prints the contents of a memory block list.
+ *
+ * Parameters:
+ *  list: Pointer to the list of memory blocks to be printed.
+ *  message: Description or title to be printed before listing the memory blocks.
+ *
+ * Description:
+ *  Iterates through the list and prints details of each memory block, including its start and end addresses, and the process ID (if any).
+ */
+void print_list(list_t * list, char * message){
+    node_t *current = list->head;
+    block_t *blk;
+    int i = 0;
+  
+    printf("%s:\n", message);
+  
+    while(current != NULL){
+        blk = current->blk;
+        printf("Block %d:\t START: %d\t END: %d", i, blk->start, blk->end);
+      
+        if(blk->pid != 0)
+            printf("\t PID: %d\n", blk->pid);
+        else  
+            printf("\n");
+      
+        current = current->next;
+        i += 1;
+    }
+}
+
+/* DO NOT MODIFY */
+/**
+ * Function: main
+ * --------------
+ * Entry point for the memory management unit simulator.
+ *
+ * Parameters:
+ *  argc: Argument count.
+ *  argv: Argument vector.
+ *
+ * Returns:
+ *  Status code (0 for successful execution).
+ *
+ * Description:
+ *  Handles the setup and execution of the memory management unit (MMU) simulation.
+ *  Processes input data for memory allocation and deallocation requests and executes these requests based on the specified policy.
+ */
+int main(int argc, char *argv[]) 
+{
+   int PARTITION_SIZE, inputdata[200][2], N = 0, Memory_Mgt_Policy;
+  
+   list_t *FREE_LIST = list_alloc();   // list that holds all free blocks (PID is always zero)
+   list_t *ALLOC_LIST = list_alloc();  // list that holds all allocated blocks
+   int i;
+  
+   if(argc != 3) {
+       printf("usage: ./mmu <input file> -{F | B | W }  \n(F=FIFO | B=BESTFIT | W-WORSTFIT)\n");
+       exit(1);
+   }
+  
+   get_input(argv, inputdata, &N, &PARTITION_SIZE, &Memory_Mgt_Policy);
+  
+   // Allocated the initial partition of size PARTITION_SIZE
+   
+   block_t * partition = malloc(sizeof(block_t));   // create the partition meta data
+   partition->start = 0;
+   partition->end = PARTITION_SIZE + partition->start - 1;
+                                   
+   list_add_to_front(FREE_LIST, partition);          // add partition to free list
+                                   
+   for(i = 0; i < N; i++) // loop through all the input data and simulate a memory management policy
+   {
+       printf("************************\n");
+       if(inputdata[i][0] != -99999 && inputdata[i][0] > 0) {
+             printf("ALLOCATE: %d FROM PID: %d\n", inputdata[i][1], inputdata[i][0]);
+             allocate_memory(FREE_LIST, ALLOC_LIST, inputdata[i][0], inputdata[i][1], Memory_Mgt_Policy);
+       }
+       else if (inputdata[i][0] != -99999 && inputdata[i][0] < 0) {
+             printf("DEALLOCATE MEM: PID %d\n", abs(inputdata[i][0]));
+             deallocate_memory(ALLOC_LIST, FREE_LIST, abs(inputdata[i][0]), Memory_Mgt_Policy);
+       }
+       else {
+             printf("COALESCE/COMPACT\n");
+             FREE_LIST = coalese_memory(FREE_LIST);
+       }   
+     
+       printf("************************\n");
+       print_list(FREE_LIST, "Free Memory");
+       print_list(ALLOC_LIST,"\nAllocated Memory");
+       printf("\n\n");
+   }
+  
+   list_free(FREE_LIST);
+   list_free(ALLOC_LIST);
+  
+   return 0;
 }

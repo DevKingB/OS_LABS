@@ -22,7 +22,7 @@
 list_t *list_alloc() {
   list_t *list = malloc(sizeof(list_t));
   if (list == NULL) {
-    printf("Error: list_alloc failed\n");
+    fprintf(stderr, "Error: list_alloc failed\n");
     exit(EXIT_FAILURE);
   }
 
@@ -48,7 +48,7 @@ list_t *list_alloc() {
 node_t *node_alloc(block_t *blk) {
   node_t *node = malloc(sizeof(node_t));
   if (node == NULL) {
-    printf("Error: node_alloc failed\n");
+    fprintf(stderr, "Error: node_alloc failed\n");
     exit(EXIT_FAILURE);
   }
 
@@ -103,6 +103,36 @@ void list_free(list_t *list) {
   free(list); //free the list itself
 }
 
+void list_add_to_freelist (list_t *freelist, block_t *block, int policy) {
+    if (policy == 1) {  // FIFO
+        list_add_to_back(freelist, block);
+    } else if (policy == 2) {  // Best Fit
+        list_add_ascending_by_blocksize(freelist, block);
+    } else if (policy == 3) {  // Worst Fit
+        list_add_descending_by_blocksize(freelist, block);
+    }
+}
+
+void remove_block_from_freelist(list_t *freelist, block_t *block) {
+    node_t *current = freelist->head;
+    node_t *prev = NULL;
+
+    while (current != NULL) {
+        if (current->blk->start == block->start && current->blk->end == block->end) {
+            if (prev) {
+                prev->next = current->next;
+            } else {
+                freelist->head = current->next;
+            }
+            free(current->blk);
+            free(current);
+            return;
+        }
+        prev = current;
+        current = current->next;
+    }
+}
+
 /**
  * Function: list_print
  * -------------------
@@ -145,7 +175,7 @@ int list_length(list_t *list) {
  *  The function traverses the list. If it finds two adjacent nodes where the end of the first node's block 
  *  is one less than the start of the second node's block, it merges the two nodes into one. 
  *  The end of the first node's block is updated to be the end of the second node's block, 
- *  and the second node is removed from the list.
+ *  and the second node is removed from the list. The length of the list is decreased for each merge
  *  If the nodes are not adjacent, it moves to the next node.
  */
 void list_coalese_nodes(list_t *list){
