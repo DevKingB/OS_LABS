@@ -50,11 +50,13 @@ void list_add_at_index(list_t *l, block_t *blk, int index);
 void list_add_ascending_by_address(list_t *l, block_t *blk);
 void list_add_ascending_by_blocksize(list_t *l, block_t *blk);
 void list_add_descending_by_blocksize(list_t *l, block_t *blk);
+void list_add_to_freelist (list_t *freelist, block_t *block, int policy);
 
 /* Methods for removing from the list. Returns the removed element. */
 block_t* list_remove_from_back(list_t *l);
 block_t* list_remove_from_front(list_t *l);
 block_t* list_remove_at_index(list_t *l, int index);
+void remove_block_from_freelist(list_t *freelist, block_t *block);
 
 /* Checks to see if block of Size exists in the list. */
 bool list_is_in(list_t *l, block_t *blk);
