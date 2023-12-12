@@ -4,8 +4,8 @@
 #include<stdlib.h>
 #include<errno.h>
 
-#include "util.h"
-#include "list.h"
+#include "./Headers/util.h"
+#include "./Headers/list.h"
 
 void parse_file(FILE *f, int input[][2], int *n, int *PARTITION_SIZE) {
     if (f == NULL) {
