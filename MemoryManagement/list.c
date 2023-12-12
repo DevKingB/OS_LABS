@@ -126,6 +126,7 @@ void remove_block_from_freelist(list_t *freelist, block_t *block) {
             }
             free(current->blk);
             free(current);
+            freelist->length--;
             return;
         }
         prev = current;
@@ -187,6 +188,7 @@ void list_coalese_nodes(list_t *list){
             node_t *temp = curr->next;
             curr->next = temp->next;
             node_free(temp);
+            list->length--;
         }
         else {
             // Move to the next block if not adjacent
@@ -241,6 +243,10 @@ void list_add_at_index(list_t *list, block_t *blk, int index) {
    else if (index >= list->length) { // Assuming linked list is 0 indexed, if index is greater than or equal to length, add to back
         list_add_to_back(list, blk);
    }
+   else if (index < 0) {
+         fprintf(stderr, "Error: Negative Index not allowed\n");
+         return;
+   }
    else { // Index value is somewhere in the middle of the linked list
         node_t *new_node = node_alloc(blk);
         node_t *prev = find_node_at_index(list->head, index - 1); //Finding node before actual index value 
@@ -255,39 +261,53 @@ void list_add_at_index(list_t *list, block_t *blk, int index) {
 /**
  * Function: list_add_ascending_by_address
  * ---------------------------------------
- * Adds a new block to the list in ascending order by address.
- *
+ * Adds a block to the list in ascending order based on the start address.
+ * 
  * Parameters:
- *  list: A pointer to the list.
- *  newblk: A pointer to the block to be added.
- *
+ *  list - A pointer to the list where the block is to be added.
+ *  newblk - A pointer to the block to be added.
+ * 
  * Description:
- *  The function creates a new node for the block and then inserts it into the list in the correct position to maintain ascending order by address.
- *  If the list is empty, the new node becomes the head of the list.
- *  If the list is not empty, the function traverses the list until it finds the correct position for the new node, then inserts it.
+ *  The function inserts the new block into the list while maintaining an order
+ *  where blocks are sorted in ascending order based on their start addresses.
  */
 void list_add_ascending_by_address(list_t *list, block_t *newblk) {
+    // Allocate a new node for the block
     node_t *new_node = node_alloc(newblk);
-    node_t *curr = list->head;
-    node_t *prev = NULL;
-    if (curr == NULL) {
-        list->head = new_node;
-    }
-    else {
-        while (curr != NULL && curr->blk->start < newblk->start) {
-            prev = curr;
-            curr = curr->next;
-        }
 
-        new_node->next = curr;
-        if (prev == NULL) {
-            list->head = new_node;
-        }
-        else {
-            prev->next = new_node;
-        }
+    // Handles the case where the list is initially empty
+    if (list->head == NULL) {
+        list->head = new_node; // The new node becomes the head
+        list->tail = new_node; // and also the tail of the list
+        list->length++;        // Increment the length of the list
+        return;                // Early return as the node is added
     }
+
+    // Traverse the list to find the correct position for the new block
+    node_t *curr = list->head; // Start from the head of the list
+    node_t *prev = NULL;       // Keep track of the previous node
+
+    // Iterate until finding the position where the new block should be inserted
+    while (curr != NULL && curr->blk->start < newblk->start) {
+        prev = curr;          // Move 'prev' to the current node
+        curr = curr->next;    // Advance 'curr' to the next node
+    }
+
+    // Insert the new node into the list at the found position
+    new_node->next = curr;    // The new node points to 'curr' node
+    if (prev) {
+        prev->next = new_node; // Insert after 'prev' node
+    }
+
+    // If inserting at the end, update the tail pointer
+    if (curr == NULL) {
+        list->tail = new_node;
+    }
+
+    list->length++; // Increment the length of the list
 }
+
+
 
 /**
  * Function: list_add_ascending_by_blocksize
@@ -304,28 +324,41 @@ void list_add_ascending_by_address(list_t *list, block_t *newblk) {
  *  If the list is empty, the new node becomes the head of the list.
  *  If the list is not empty, the function traverses the list until it finds the correct position for the new node, then inserts it.
  */
-void list_add_ascending_by_blocksize (list_t *list, block_t *newblk) {
+void list_add_ascending_by_blocksize(list_t *list, block_t *newblk) {
+    // Allocate a new node for the block
     node_t *new_node = node_alloc(newblk);
+    int newblk_size = newblk->end - newblk->start;
+
+    // If list is empty, add new node as both head and tail
+    if (list->head == NULL) {
+        list->head = list->tail = new_node;
+        list->length++;
+        return;
+    }
+
+    // Traverse the list to find the correct insertion point
     node_t *curr = list->head;
     node_t *prev = NULL;
-    if (curr == NULL) {
-        list->head = new_node;
+    while (curr != NULL && (curr->blk->end - curr->blk->start) < newblk_size) {
+        prev = curr;
+        curr = curr->next;
     }
-    else {
-        while (curr != NULL && ((curr->blk->end - curr->blk->start) < (newblk->end - newblk->start))) {
-            prev = curr;
-            curr = curr->next;
-        }
 
-        new_node->next = curr;
-        if (prev == NULL) {
-            list->head = new_node;
-        }
-        else {
-            prev->next = new_node;
-        }
+    // Insert new node in the list
+    new_node->next = curr;
+    if (prev) {
+        prev->next = new_node;
     }
+
+    // If the new node is added at the end, update the tail
+    if (curr == NULL) {
+        list->tail = new_node;
+    }
+
+    // Increment list length
+    list->length++;
 }
+
 
 /**
  * Function: list_add_descending_by_blocksize
@@ -342,48 +375,42 @@ void list_add_ascending_by_blocksize (list_t *list, block_t *newblk) {
  *  If the list is empty, the new node becomes the head of the list.
  *  If the list is not empty, the function traverses the list until it finds the correct position for the new node, then inserts it.
  */
-void list_add_descending_by_blocksize (list_t *list, block_t *newblk) {
+void list_add_descending_by_blocksize(list_t *list, block_t *newblk) {
     node_t *new_node = node_alloc(newblk);
-    node_t *curr = list->head;
-    node_t *prev = NULL;
     int newblk_size = newblk->end - newblk->start;
 
-    if (curr == NULL) {
+    // If the list is empty, set the new node as both head and tail.
+    if (list->head == NULL) {
         list->head = new_node;
-    }
-    else {
-        prev = curr;
-        int curr_blk_size = curr->blk->end - curr->blk->start + 1;
-        if (curr->next == NULL) { // Only one node in the list
-            if (newblk_size > curr_blk_size) { //place in front of the current node
-                new_node->next = curr;
-                list->head = new_node;
-            }
-            else { //place behind the current node
-                curr->next = new_node;
-                new_node->next = NULL;
-            }
-        }
-        else { //two or more nodes in the list
+        list->tail = new_node;
+    } else {
+        node_t *curr = list->head;
+        node_t *prev = NULL;
 
-            if (newblk_size >= curr_blk_size) { //place in front of the current node
-                new_node->next = curr;
-                list->head = new_node;
-            }
-            else { 
-                while (curr != NULL  && newblk_size < curr_blk_size) {
-                    prev = curr;
-                    curr = curr->next;
-                    if (curr != NULL) { //The last one in the list
-                        curr_blk_size = curr->blk->end - curr->blk->start + 1;
-                    }
-                }
-                prev->next = new_node;
-                new_node->next = curr;
-            }
-        } 
+        // Iterate through the list to find the insertion point.
+        while (curr != NULL && (curr->blk->end - curr->blk->start + 1 ) >= newblk_size) {
+            prev = curr;
+            curr = curr->next;
+        }
+
+        // Insert the new node at the identified position.
+        new_node->next = curr;
+        if (prev == NULL) { // Inserting at the head.
+            list->head = new_node;
+        } else { // Inserting in the middle or end.
+            prev->next = new_node;
+        }
+
+        // Update the tail if inserted at the end.
+        if (curr == NULL) {
+            list->tail = new_node;
+        }
     }
+
+    // Increment the list length.
+    list->length++;
 }
+
 
 /********* Function Defintiions: Removing **************/
 
@@ -529,8 +556,8 @@ block_t* list_get_from_back(list_t *list) {
 }
 
 block_t* list_get_elem_at_index (list_t *list, int index) {
-    block_t *blk;
-    int count = 0; //! Assuming the linked list starts at 0
+    // //block_t *blk;
+    // //int count = 0; //! Assuming the linked list starts at 0
     /* If the linked list is empty*/
     if (list->head == NULL || index <  0 || index >= list->length) {
         printf("List is empty or invalid index\n");
