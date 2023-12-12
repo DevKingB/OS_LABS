@@ -18,7 +18,7 @@
  */
 void TOUPPER(char * arr){
   
-    for(int i=0;i<strlen(arr);i++){
+    for(size_t i=0;i<strlen(arr);i++){
         arr[i] = toupper(arr[i]);
     }
 }
@@ -109,6 +109,7 @@ void allocate_memory(list_t *freelist, list_t *alloclist, int pid, int blocksize
     }
 
     node_t *selected_block = (policy == 3) ? worst_fit : best_fit;
+
     if (selected_block) {
         // Allocate the block
         block_t *new_block = malloc(sizeof(block_t));
@@ -131,7 +132,8 @@ void allocate_memory(list_t *freelist, list_t *alloclist, int pid, int blocksize
         remove_block_from_freelist(freelist, selected_block->blk);
 
     } else {
-        printf("Error: Not Enough Memory\n");
+        fprintf(stderr, "Error: Not Enough Memory for PID %d\n", pid);
+        return; // Early return if no suitable block is found
     }
 }
 
@@ -182,9 +184,11 @@ void deallocate_memory(list_t *alloclist, list_t *freelist, int pid, int policy)
         }
         free(current->blk);
         free(current);
+        alloclist->length -= 1;
 
     } else {
-        printf("Error: Can't locate Memory Used by PID: %d\n", pid);
+        printf("Error: Memory block with PID %d not found for deallocation\n", pid);
+        return; // Early return if block not found
     }
 }
 
@@ -268,6 +272,8 @@ void print_list(list_t * list, char * message){
  *  Handles the setup and execution of the memory management unit (MMU) simulation.
  *  Processes input data for memory allocation and deallocation requests and executes these requests based on the specified policy.
  */
+
+#ifndef TESTING
 int main(int argc, char *argv[]) 
 {
    int PARTITION_SIZE, inputdata[200][2], N = 0, Memory_Mgt_Policy;
@@ -290,6 +296,12 @@ int main(int argc, char *argv[])
    partition->end = PARTITION_SIZE + partition->start - 1;
                                    
    list_add_to_front(FREE_LIST, partition);          // add partition to free list
+
+   // Check for empty input data
+    if (N == 0) {
+        fprintf(stderr, "Error: No data in input file\n");
+        exit(EXIT_FAILURE);
+    }
                                    
    for(i = 0; i < N; i++) // loop through all the input data and simulate a memory management policy
    {
@@ -318,3 +330,4 @@ int main(int argc, char *argv[])
   
    return 0;
 }
+#endif
