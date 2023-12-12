@@ -3,6 +3,8 @@
 // Interface definition for linked list.
 //
 // <Author>
+#ifndef LIST_H
+#define LIST_H
 
 #include <stdbool.h>
 
@@ -36,6 +38,7 @@ list_t *list_alloc();
 node_t *node_alloc(block_t *blk);
 
 void list_free(list_t *l);
+void node_free(node_t *node);
 
 /* Prints the list in some format. */
 void list_print(list_t *l);
@@ -90,3 +93,5 @@ void list_coalese_nodes(list_t *l);
 
 /* Helper Function to reduce code duplication */
 node_t* find_node_at_index (node_t *head, int index);
+
+#endif /* LIST_H */

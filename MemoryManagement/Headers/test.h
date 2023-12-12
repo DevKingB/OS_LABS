@@ -11,5 +11,7 @@ void test_deallocate_memory();
 void test_coalese_memory();
 void test_list_add_to_freelist();
 void test_remove_block_from_freelist();
+void test_allocate_memory_edge_cases();
+void test_deallocate_memory_edge_cases();
 
-#endif // TEST_H
+#endif /* TEST_H */
