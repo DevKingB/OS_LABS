@@ -155,41 +155,36 @@ void allocate_memory(list_t *freelist, list_t *alloclist, int pid, int blocksize
  *  The deallocated block is then added back to the free list according to the specified memory management policy.
  */
 void deallocate_memory(list_t *alloclist, list_t *freelist, int pid, int policy) {
-    block_t *block_to_deallocate = NULL;
     node_t *current = alloclist->head;
     node_t *prev = NULL;
 
     // Find the block with the given PID
     while (current != NULL) {
         if (current->blk->pid == pid) {
-            block_to_deallocate = current->blk;
-            break;
+            block_t *block_to_deallocate = current->blk;
+
+            //Add the block back to the free list
+            list_add_to_freelist(freelist, block_to_deallocate, policy);
+            block_to_deallocate->pid = 0;  // Set PID to 0 to indicate that it is free
+
+            // Remove the block from the allocated list
+            if (prev) {
+                prev->next = current->next;
+            } else {
+                alloclist->head = current->next;
+            }
+
+            // Safely removing the current node from the list, since its block is in the freelist
+            free(current);
+            alloclist->length--;
+            current = NULL; //Setting pointer to NULL to avoind dangling pointers
+            return; // exit after deallocation
         }
         prev = current;
         current = current->next;
     }
-
-    if (block_to_deallocate) {
-        // Deallocate the block
-        block_to_deallocate->pid = 0;  // Mark as free
-
-        // Add the block back to the free list
-        list_add_to_freelist(freelist, block_to_deallocate, policy);
-
-        // Remove the block from the allocated list
-        if (prev) {
-            prev->next = current->next;
-        } else {
-            alloclist->head = current->next;
-        }
-        free(current->blk);
-        free(current);
-        alloclist->length -= 1;
-
-    } else {
-        printf("Error: Memory block with PID %d not found for deallocation\n", pid);
-        return; // Early return if block not found
-    }
+    fprintf(stderr, "Memory block with PID %d not found for deallocaiton\n", pid);
+    return; // returning early if not found
 }
 
 /**
