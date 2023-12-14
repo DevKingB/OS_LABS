@@ -96,7 +96,7 @@ void allocate_memory(list_t *freelist, list_t *alloclist, int pid, int blocksize
                 best_fit = current;
                 break;
             } else if (policy == 2) {  // Best Fit
-                if (!best_fit || current_size < best_fit->blk->end - best_fit->blk->start + 1) {
+                if (!best_fit || (current_size >= blocksize && current_size < best_fit->blk->end - best_fit->blk->start + 1)) {
                     best_fit = current;
                 }
             } else if (policy == 3) {  // Worst Fit
@@ -123,7 +123,7 @@ void allocate_memory(list_t *freelist, list_t *alloclist, int pid, int blocksize
         if (new_block->end < selected_block->blk->end) {
             block_t *fragment = malloc(sizeof(block_t));
             fragment->pid = 0;  // Free block
-            fragment->start = new_block->end + 1;
+            fragment->start = selected_block->blk->start = new_block->end + 1;
             fragment->end = selected_block->blk->end;
             list_add_to_freelist(freelist, fragment, policy);  // Add back to free list
         }

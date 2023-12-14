@@ -328,6 +328,7 @@ void list_add_ascending_by_blocksize(list_t *list, block_t *newblk) {
     // Allocate a new node for the block
     node_t *new_node = node_alloc(newblk);
     int newblk_size = newblk->end - newblk->start;
+    //? might need to include the +1 for the block size here
 
     // If list is empty, add new node as both head and tail
     if (list->head == NULL) {
